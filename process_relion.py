@@ -80,6 +80,31 @@ class process_helical():
             print(helicaldic[str(i)])
         return helicaldic, helicalnum
 
+class process_cryosparc_helical():
+    def __init__(self,data):
+        self.data=data
+    def extract_helical(self):
+        data=self.data
+        helicaldic = {}
+        helicalnum = []
+        count = -1
+        for particle in data:
+            ID = str(os.path.basename(particle[1]))
+            if ID in helicalnum:
+                n = str(count)
+                lst = helicaldic[n]
+                lst.append(particle[-2])
+                helicaldic[n] = lst
+            else:
+                helicalnum.append(ID)
+                n = str(helicalnum.index(ID))
+                count += 1
+                helicaldic[n] = [particle[-2]]
+        print('finish converting')
+        for i in range(10):
+            print(helicaldic[str(i)])
+        return helicaldic, helicalnum
+    
 class output_simple_helical():
     def __init__(self, file, data):
         self.data=process_helical(data).extarct_helical()
