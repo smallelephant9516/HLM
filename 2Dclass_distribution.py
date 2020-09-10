@@ -4,8 +4,8 @@ import pandas as pd
 import process_relion
 
 #data path
-file_path='F:/script/class2vec/real_star_file/10230_tau.star'
-datatype=1 #0 is relion 3.1, 1 is relion 3, 2 is cryosparc
+file_path='F:/script/class2vec/real_star_file/run_it013_data.star'
+datatype=0 #0 is relion 3.1, 1 is relion 3, 2 is cryosparc
 
 file_name=os.path.basename(file_path)
 output_path=os.path.dirname(file_path)+'/'+os.path.splitext(file_name)[0]
@@ -40,7 +40,7 @@ for i in range(len(corpus)):
 data_line=0
 positive_label=[]
 for i in range(len(data)):
-    positive_label.append(data[data_line][6][18:21])
+    positive_label.append(data[data_line][7][18:21])
     data_line+=1 
 
 class2D_label=list(map(int,class2D_label))
@@ -81,6 +81,6 @@ ax[0].plot(all_2Dclass,height+0.1-0.6)
 ax[0].legend()
 ax[0].set_xticks(all_2Dclass)
 type12_distribution=distribution[:,0]
-ax[1].hist(type12_distribution,bins=25)
-plt.savefig('2Dclass_positive_label_10230.png')
+ax[1].hist(type12_distribution,bins=10,range=(0,1))
+plt.savefig(output_path+'/'+os.path.splitext(file_name)[0]+'_2Dclass_label.png')
 plt.show()

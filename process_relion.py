@@ -79,7 +79,38 @@ class process_helical():
         for i in range(10):
             print(helicaldic[str(i)])
         return helicaldic, helicalnum
-
+    def extarct_helical_select(self):
+        data=self.data
+        M = self.metadata.index('_rlnImageName')
+        H = self.metadata.index('_rlnHelicalTubeID')
+        C = self.metadata.index('_rlnClassNumber')
+        print('finish reading')
+        # extract helical parameters
+        helicaldic = {}
+        helicalnum = []
+        count = -1
+        dtype=[('class2D',int),('place',int),('index',int)]
+        for particle in data:
+            ID = particle[M][7:] + '-' + str(particle[H])
+            if ID in helicalnum:
+                n = str(count)
+                particle_index+=1
+                helicaldic[n].append((particle[C],particle[M][0:6],particle_index))
+            else:
+                if helicaldic != {}:
+                    lst=np.array(helicaldic[str(count)],dtype=dtype)
+                    helicaldic[str(count)]=np.sort(lst,order='place')
+                helicalnum.append(ID)
+                n = str(helicalnum.index(ID))
+                count += 1
+                particle_index=0
+                helicaldic[n] = [(particle[C],particle[M][0:6],particle_index)]
+        lst=np.array(helicaldic[str(count)],dtype=dtype)
+        helicaldic[str(count)]=np.sort(lst,order='place')
+        print('finish converting')
+        for i in range(5):
+            print(helicaldic[str(i)])
+        return helicaldic, helicalnum
 class process_cryosparc_helical():
     def __init__(self,data):
         self.data=data
