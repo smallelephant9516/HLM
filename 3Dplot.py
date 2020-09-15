@@ -6,7 +6,7 @@ import numpy as np
 
 fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(1,1,1,projection='3d')
-data=np.load('F:/script/class2vec/real_star_file/10340_case2_E8_ig/umap_3D_normal.npy')
+data=np.load('F:/script/class2vec/real_star_file/PRPCAA_job898/umap_3D_normal.npy')
 print(data[1])
 scale = 8
 # Make data.
@@ -24,7 +24,7 @@ ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
 # rotate the axes and update
 for angle in range(0, 360):
-   ax.view_init(30, 40)
+   ax.view_init(45, 30)
 
 
 plt.show()

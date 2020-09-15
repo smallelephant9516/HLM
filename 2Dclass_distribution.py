@@ -1,10 +1,10 @@
 import sys, os
 import numpy as np
 import pandas as pd
-import process_relion
+import EMdata
 
 #data path
-file_path='F:/script/class2vec/real_star_file/run_it013_data.star'
+file_path='F:/script/class2vec/real_star_file/run_ct13_it022_data.star'
 datatype=0 #0 is relion 3.1, 1 is relion 3, 2 is cryosparc
 
 file_name=os.path.basename(file_path)
@@ -13,7 +13,7 @@ if os.path.isdir(output_path) is False:
     os.mkdir(output_path)
 
 if datatype<2:
-    file_info=process_relion.read_relion(file_path)
+    file_info=EMdata.read_relion(file_path)
     if datatype==0:
         #read data (relion3.1)
         dataset=file_info.getRdata_31()
@@ -25,11 +25,11 @@ if datatype<2:
     print(metadata)
     data=dataset[1]
     print(data[0])
-    corpus_information=process_relion.process_helical(dataset).extarct_helical()
+    corpus_information=EMdata.process_helical(dataset).extarct_helical()
 else:
     #read cryosparc
     dataset=np.load(file_path)
-    corpus_information=process_relion.process_cryosparc_helical(dataset).extract_helical()
+    corpus_information=EMdata.process_cryosparc_helical(dataset).extract_helical()
 corpus_dic=corpus_information[0]
 corpus=list(corpus_dic.values())
 
@@ -41,6 +41,7 @@ data_line=0
 positive_label=[]
 for i in range(len(data)):
     positive_label.append(data[data_line][7][18:21])
+    #positive_label.append(data[data_line][0][67:70])
     data_line+=1 
 
 class2D_label=list(map(int,class2D_label))

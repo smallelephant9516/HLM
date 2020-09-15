@@ -93,20 +93,18 @@ class process_helical():
         for particle in data:
             ID = particle[M][7:] + '-' + str(particle[H])
             if ID in helicalnum:
-                n = str(count)
+                n = str(helicalnum.index(ID))
                 particle_index+=1
                 helicaldic[n].append((particle[C],particle[M][0:6],particle_index))
             else:
-                if helicaldic != {}:
-                    lst=np.array(helicaldic[str(count)],dtype=dtype)
-                    helicaldic[str(count)]=np.sort(lst,order='place')
                 helicalnum.append(ID)
                 n = str(helicalnum.index(ID))
                 count += 1
                 particle_index=0
                 helicaldic[n] = [(particle[C],particle[M][0:6],particle_index)]
-        lst=np.array(helicaldic[str(count)],dtype=dtype)
-        helicaldic[str(count)]=np.sort(lst,order='place')
+        for i in range(len(helicaldic)):
+            lst=np.array(helicaldic[str(i)],dtype=dtype)
+            helicaldic[str(i)]=np.sort(lst,order='place')
         print('finish converting')
         for i in range(5):
             print(helicaldic[str(i)])
