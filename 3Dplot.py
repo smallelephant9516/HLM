@@ -6,7 +6,7 @@ import numpy as np
 
 fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(1,1,1,projection='3d')
-data=np.load('F:/script/class2vec/real_star_file/PRPCAA_job898/umap_3D_normal.npy')
+data=np.load('F:/script/class2vec/real_star_file/10340_case2_600/umap_3D_bert.npy')
 print(data[1])
 scale = 8
 # Make data.
@@ -15,7 +15,7 @@ Y = data[:,1]
 Z = data[:,2]
 
 # Plot the surface.
-ax.scatter(data[:,0], data[:,1], data[:,2], c='blue', s=10)
+ax.scatter(data[:,0], data[:,1], data[:,2], c='blue', s=10,alpha=0.3)
 
 # Customize the z axis.
 #ax.set_zlim(0, 100)

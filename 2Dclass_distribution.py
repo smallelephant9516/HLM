@@ -4,7 +4,7 @@ import pandas as pd
 import EMdata
 
 #data path
-file_path='F:/script/class2vec/real_star_file/run_ct13_it022_data.star'
+file_path='F:/script/class2vec/real_star_file/10340_case3_400.star'
 datatype=0 #0 is relion 3.1, 1 is relion 3, 2 is cryosparc
 
 file_name=os.path.basename(file_path)
