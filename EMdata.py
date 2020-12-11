@@ -189,7 +189,7 @@ class output_star():
 
         with open(filename, "a") as file:
             file.writelines("%s\n" % "          ")
-            file.writelines("%s\n" % "data_particle")
+            file.writelines("%s\n" % "data_particles")
             file.writelines("%s\n" % "           ")
             file.writelines("%s\n" % "loop_")
 
