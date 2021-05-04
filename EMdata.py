@@ -33,7 +33,7 @@ class read_relion(object):
         Rvar = []  # read the variables metadata
         Rdata = []  # read the data
 
-        for star_line in open(self.file).readlines()[19:]:
+        for star_line in open(self.file).readlines()[20:]:
             if star_line.find("_rln") != -1:
                 var = star_line.split()
                 Rvar.append(var[0])
@@ -90,18 +90,16 @@ class process_helical():
         helicalnum = []
         count = -1
         dtype=[('class2D',int),('place',int),('index',int)]
-        for particle in data:
+        for i, particle in enumerate(data):
             ID = particle[M][7:] + '-' + str(particle[H])
             if ID in helicalnum:
                 n = str(helicalnum.index(ID))
-                particle_index+=1
-                helicaldic[n].append((particle[C],particle[M][0:6],particle_index))
+                helicaldic[n].append((particle[C],particle[M][0:6],i))
             else:
                 helicalnum.append(ID)
                 n = str(helicalnum.index(ID))
                 count += 1
-                particle_index=0
-                helicaldic[n] = [(particle[C],particle[M][0:6],particle_index)]
+                helicaldic[n] = [(particle[C],particle[M][0:6],i)]
         for i in range(len(helicaldic)):
             lst=np.array(helicaldic[str(i)],dtype=dtype)
             helicaldic[str(i)]=np.sort(lst,order='place')
