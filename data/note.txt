@@ -1,0 +1,5 @@
+
+ ++++ Executing new job on Fri Apr  1 16:51:10 2022
+ ++++ with the following command(s): 
+python ../../filament_cluster/word2vec_script/filament_embedding.py --o External/job444/ --in_parts Class2D/job087/run_it025_data.star --j 8 
+ ++++ 

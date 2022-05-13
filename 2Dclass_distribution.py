@@ -4,7 +4,7 @@ import pandas as pd
 import EMdata
 
 #data path
-file_path='F:/script/class2vec/real_star_file/10340_case3_400.star'
+file_path='F:/script/class2vec/real_star_file/10340_case3_800_sampling2_select.star'
 datatype=0 #0 is relion 3.1, 1 is relion 3, 2 is cryosparc
 
 file_name=os.path.basename(file_path)
@@ -39,8 +39,11 @@ for i in range(len(corpus)):
     class2D_label.extend(corpus[i])
 data_line=0
 positive_label=[]
+index=metadata.index('_rlnImageName')
+print(index)
 for i in range(len(data)):
-    positive_label.append(data[data_line][7][18:21])
+    positive_label.append(data[data_line][index][18:21])
+    #positive_label.append(data[data_line][index][-7:-3])
     #positive_label.append(data[data_line][0][67:70])
     data_line+=1 
 
@@ -82,6 +85,7 @@ ax[0].plot(all_2Dclass,height+0.1-0.6)
 ax[0].legend()
 ax[0].set_xticks(all_2Dclass)
 type12_distribution=distribution[:,0]
-ax[1].hist(type12_distribution,bins=10,range=(0,1))
-plt.savefig(output_path+'/'+os.path.splitext(file_name)[0]+'_2Dclass_label.png')
+ax[1].hist(type12_distribution,bins=20,range=(0,1))
+plt.savefig(output_path+'/'+os.path.splitext(file_name)[0]+'_2Dclass_label.png',bbox_inches='tight', pad_inches=0.01)
+plt.savefig(output_path+'/'+os.path.splitext(file_name)[0]+'_2Dclass_label.pdf',bbox_inches='tight', pad_inches=0.01)
 plt.show()

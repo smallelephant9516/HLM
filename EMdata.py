@@ -104,8 +104,8 @@ class process_helical():
             lst=np.array(helicaldic[str(i)],dtype=dtype)
             helicaldic[str(i)]=np.sort(lst,order='place')
         print('finish converting')
-        for i in range(5):
-            print(helicaldic[str(i)])
+        #for i in range(5):
+        #    print(helicaldic[str(i)])
         return helicaldic, helicalnum
 class process_cryosparc_helical():
     def __init__(self,data):
