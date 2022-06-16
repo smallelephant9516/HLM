@@ -53,28 +53,38 @@ class process_helical():
         self.metadata=dataset[0]
         self.data=dataset[1]
         self.classnumber=classnumber
-    def extarct_helical(self):
+    def extarct_helical(self,label=None):
         data=self.data
         M = self.metadata.index('_rlnImageName')
         H = self.metadata.index('_rlnHelicalTubeID')
-        C = self.metadata.index('_rlnClassNumber')
+        if label is None:
+            C = self.metadata.index('_rlnClassNumber')
         print('finish reading')
         # extract helical parameters
         helicaldic = {}
         helicalnum = []
         count = -1
+        label_id=0
         for particle in data:
             ID = particle[M][7:] + '-' + str(particle[H])
             if ID in helicalnum:
                 n = str(count)
                 lst = helicaldic[n]
-                lst.append(particle[C])
+                if label is not None:
+                    lst.append(label[label_id])
+                    label_id +=1
+                else: 
+                    lst.append(particle[C])
                 helicaldic[n] = lst
             else:
                 helicalnum.append(ID)
                 n = str(helicalnum.index(ID))
                 count += 1
-                helicaldic[n] = [particle[C]]
+                if label is not None:
+                    helicaldic[n]=[label[label_id]]
+                    label_id +=1
+                else:
+                    helicaldic[n] = [particle[C]]
         print('finish converting')
         for i in range(10):
             print(helicaldic[str(i)])
