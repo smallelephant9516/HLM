@@ -1,7 +1,11 @@
 import numpy as np
 import os
 import sys
+import time
+import gc
+import pandas as pd
 
+start_time= time.time()
 class read_relion(object):
     def __init__(self, file):
         self.file = file
@@ -100,16 +104,55 @@ class process_helical():
         helicalnum = []
         count = -1
         dtype=[('class2D',int),('place',int),('index',int)]
+        print('number of particles',len(data))
+        gc.disable()
         for i, particle in enumerate(data):
+            if i%10000==0:
+                end_time=time.time()
+                passed_time=(end_time-start_time)/60
+                print(i,'%s mins' % passed_time)
             ID = particle[M][7:] + '-' + str(particle[H])
             if ID in helicalnum:
-                n = str(helicalnum.index(ID))
-                helicaldic[n].append((particle[C],particle[M][0:6],i))
+                n = helicalnum.index(ID)
+                helicaldic[n]=helicaldic[n]+[(particle[C],particle[M][0:6],i)]
             else:
-                helicalnum.append(ID)
+                helicalnum=helicalnum+[ID]
                 n = str(helicalnum.index(ID))
                 count += 1
                 helicaldic[n] = [(particle[C],particle[M][0:6],i)]
+        gc.enable()
+        for i in range(len(helicaldic)):
+            lst=np.array(helicaldic[str(i)],dtype=dtype)
+            helicaldic[str(i)]=np.sort(lst,order='place')
+        print('finish converting')
+        #for i in range(5):
+        #    print(helicaldic[str(i)])
+        return helicaldic, helicalnum
+    def extarct_helical_select_fast(self):
+        data=self.data
+        M = self.metadata.index('_rlnImageName')
+        H = self.metadata.index('_rlnHelicalTubeID')
+        C = self.metadata.index('_rlnClassNumber')
+        print('finish reading')
+        dataframe=pd.DataFrame()
+        # extract helical parameters
+        helicaldic = []
+        helicalnum = []
+        dtype=[('class2D',int),('place',int),('index',int)]
+        print('number of particles',len(data))
+        for i, particle in enumerate(data):
+            if i%10000==0:
+                end_time=time.time()
+                passed_time=(end_time-start_time)/60
+                print(i,'%s mins' % passed_time)
+            ID = particle[M][7:] + '-' + str(particle[H])
+            if ID in helicalnum:
+                n = helicalnum.index(ID)
+                helicaldic[n]=helicaldic[n]+[(particle[C],particle[M][0:6],i)]
+            else:
+                helicalnum=helicalnum+[ID]
+                n = str(helicalnum.index(ID))
+                helicaldic.append([(particle[C],particle[M][0:6],i)])
         for i in range(len(helicaldic)):
             lst=np.array(helicaldic[str(i)],dtype=dtype)
             helicaldic[str(i)]=np.sort(lst,order='place')
