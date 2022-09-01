@@ -4,3 +4,9 @@
 *.3
 *.2
 *.bin
+*.json
+*.pt
+*.pth
+*.txt
+*.pyc
+*.pyc

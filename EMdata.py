@@ -128,38 +128,19 @@ class process_helical():
         return helicaldic, helicalnum
     def extarct_helical_select_fast(self):
         data=self.data
-        M = self.metadata.index('_rlnImageName')
+        M = self.metadata.index('_rlnMicrographName')
         H = self.metadata.index('_rlnHelicalTubeID')
         C = self.metadata.index('_rlnClassNumber')
         print('finish reading')
-        #dataframe=pd.DataFrame(data=data,column=self.metadata)
+        dataframe=pd.DataFrame(data=data,columns=self.metadata)
+        print('finish dataframe')
+        groupby_filament=dataframe.groupby(['_rlnMicrographName','_rlnHelicalTubeID'])
+        print(groupby_filament.count())
         # extract helical parameters
-        helicaldic = []
-        helicalnum = []
-        dtype=[('class2D',int),('place',int),('index',int)]
-        print('number of particles',len(data))
-        gc.disable()
-        for i, particle in enumerate(data):
-            if i%10000==0:
-                end_time=time.time()
-                passed_time=(end_time-start_time)/60
-                print(i,'%s mins' % passed_time)
-            ID = particle[M][7:] + '-' + str(particle[H])
-            if ID in helicalnum:
-                n = helicalnum.index(ID)
-                helicaldic[n]=helicaldic[n]+[(particle[C],particle[M][0:6],i)]
-            else:
-                helicalnum=helicalnum+[ID]
-                n = str(helicalnum.index(ID))
-                helicaldic.append([(particle[C],particle[M][0:6],i)])
-        for i in range(len(helicaldic)):
-            lst=np.array(helicaldic[str(i)],dtype=dtype)
-            helicaldic[str(i)]=np.sort(lst,order='place')
-        gc.enable()
         print('finish converting')
         #for i in range(5):
         #    print(helicaldic[str(i)])
-        return helicaldic, helicalnum
+        return groupby_filament
 class process_cryosparc_helical():
     def __init__(self,data):
         self.data=data
