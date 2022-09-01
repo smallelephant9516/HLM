@@ -1,10 +1,12 @@
 # importing metadata
+print('enter the program')
 import os, sys
 import numpy as np
 import pandas as pd
 from numpy.random import multinomial
 import argparse
 import EMdata
+print('load parser library')
 
 # training library
 import torch
@@ -14,6 +16,7 @@ import torch.optim as optim
 import itertools
 from collections import Counter
 import random, math
+print('load training library')
 
 # clustering library
 import umap
@@ -23,6 +26,7 @@ from sklearn.mixture import GaussianMixture
 from scipy.spatial.distance import cdist
 from scipy.stats import multivariate_normal
 from sklearn.decomposition import PCA
+print('load sklearn library')
 
 # plotting library
 import matplotlib
@@ -30,6 +34,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import time
 
+print('finish loading package')
 
 
 def add_args(parser):

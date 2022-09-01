@@ -2,10 +2,93 @@ import numpy as np
 import os
 import sys
 import time
-import gc
 import pandas as pd
+import gemmi
 
 start_time= time.time()
+
+
+
+#copy from https://github.com/jianglab/HILL/blob/main/hill_power_spectra.py
+class read_file_df():
+    def __init__(self, file):
+        self.file = file
+        
+    def star2dataframe(self):
+        starFile=self.file
+        from gemmi import cif
+        star = cif.read_file(starFile)
+        if len(star) == 2:
+            optics = cif.Document()
+            optics.add_copied_block(star[0])
+            del star[0]
+            js = optics.as_json(True)  # True -> preserve case
+            optics = pd.read_json(js).T
+            d = {c.strip('_'): optics[c].values[0] for c in optics}
+            optics = pd.DataFrame(d)
+        else:
+            optics = None
+        js = star.as_json(True)  # True -> preserve case
+        data = pd.read_json(js).T
+        d = {c.strip('_'): data[c].values[0] for c in data}
+        data = pd.DataFrame(d)
+        
+        assert("rlnImageName" in data)
+        tmp = data["rlnImageName"].str.split("@", expand=True)
+        indices, filenames = tmp.iloc[:,0], tmp.iloc[:, -1]
+        indices = indices.astype(int)-1
+        data["pid"] = indices
+        data["filename"] = filenames
+    
+        if optics is not None:
+            og_names = set(optics["rlnOpticsGroup"].unique())
+            for gn, g in data.groupby("rlnOpticsGroup", sort=False):
+                if gn not in og_names:
+                    print(f"ERROR: optic group {gn} not available ({sorted(og_names)})")
+                    sys.exit(-1)
+                ptcl_indices = g.index
+                og_index = optics["rlnOpticsGroup"] == gn
+                if "rlnPixelSize" in optics:
+                    data.loc[ptcl_indices, "apix"] = optics.loc[og_index, "rlnPixelSize"].astype(float).iloc[0]
+        if "rlnPixelSize" in data:
+            data.loc[:, "apix"] = data["rlnPixelSize"]
+        if "rlnClassNumber" in data:
+            data.loc[:, "class"] = data["rlnClassNumber"]
+        if "rlnHelicalTubeID" in data:
+            data.loc[:, "helicaltube"] = data["rlnHelicalTubeID"].astype(int)-1
+        if "rlnAnglePsiPrior" in data:
+            data.loc[:, "phi0"] = data["rlnAnglePsiPrior"].astype(float).round(3) - 90.0
+        return data
+
+
+    def cs2dataframe(self):
+        csFile=self.file
+        # read CryoSPARC v2/3 meta data
+        cs = np.load(csFile)
+        import pandas as pd
+        data = pd.DataFrame.from_records(cs.tolist(), columns=cs.dtype.names)
+        if csFile.find("passthrough_particles") == -1:
+            ptfs = sorted(pathlib.Path(csFile).parent.glob("*passthrough_particles*.cs"))
+            if ptfs:
+                extra_data = []
+                for ptf in ptfs:
+                    passthrough_file = ptf.as_posix()
+                    cs = np.load(passthrough_file)
+                    if len(cs) != len(data): continue                    
+                    extra_data += [ pd.DataFrame.from_records(cs.tolist(), columns=cs.dtype.names) ]
+                data = pd.concat([data] + extra_data, axis=1)
+        mapping = {"blob/idx":"pid", "blob/psize_A":"apix", "filament/filament_uid":"helicaltube"}
+        for key in mapping:
+            if key in data:
+                data.loc[:, mapping[key]] = data[key]
+        if "filament/filament_pose" in data:    # = - rlnAnglePsiPrior
+            data.loc[:, "phi0"] = -np.rad2deg(data["filament/filament_pose"]) - 90
+        if "alignments2D/class" in data:
+            data.loc[:, "class"] = data["alignments2D/class"]
+        if "blob/path" in data:
+            data.loc[:, "filename"] = data["blob/path"].str.decode("utf-8")
+        return data
+
 class read_relion(object):
     def __init__(self, file):
         self.file = file
@@ -49,6 +132,24 @@ class read_relion(object):
                 Rdata.append(star_line.split())
 
         return Rvar, Rdata
+
+
+class process_helical_df()
+    def __init__(self, df):
+        self.data=df
+    def extract_helical(self,label=None):
+        # label is a numpy array
+        if label:
+            self.data.loc[:, "label"] = label
+        else:
+            self.data.loc[:, "label"] = self.data["class"]
+        dataframe=self.data
+        filament_data=dataframe.groupby(['filename','helicaltube'])
+        filament_index=list(filament_data.groups.keys())
+        corpus=[]
+        for i in range(len(filament_index)):
+            
+            
 
 
 #the data is read_relion(sys.argv[1]).getRdata()
@@ -126,40 +227,7 @@ class process_helical():
         #for i in range(5):
         #    print(helicaldic[str(i)])
         return helicaldic, helicalnum
-    def extarct_helical_select_fast(self):
-        data=self.data
-        M = self.metadata.index('_rlnImageName')
-        H = self.metadata.index('_rlnHelicalTubeID')
-        C = self.metadata.index('_rlnClassNumber')
-        print('finish reading')
-        #dataframe=pd.DataFrame(data=data,column=self.metadata)
-        # extract helical parameters
-        helicaldic = []
-        helicalnum = []
-        dtype=[('class2D',int),('place',int),('index',int)]
-        print('number of particles',len(data))
-        gc.disable()
-        for i, particle in enumerate(data):
-            if i%10000==0:
-                end_time=time.time()
-                passed_time=(end_time-start_time)/60
-                print(i,'%s mins' % passed_time)
-            ID = particle[M][7:] + '-' + str(particle[H])
-            if ID in helicalnum:
-                n = helicalnum.index(ID)
-                helicaldic[n]=helicaldic[n]+[(particle[C],particle[M][0:6],i)]
-            else:
-                helicalnum=helicalnum+[ID]
-                n = str(helicalnum.index(ID))
-                helicaldic.append([(particle[C],particle[M][0:6],i)])
-        for i in range(len(helicaldic)):
-            lst=np.array(helicaldic[str(i)],dtype=dtype)
-            helicaldic[str(i)]=np.sort(lst,order='place')
-        gc.enable()
-        print('finish converting')
-        #for i in range(5):
-        #    print(helicaldic[str(i)])
-        return helicaldic, helicalnum
+
 class process_cryosparc_helical():
     def __init__(self,data):
         self.data=data
