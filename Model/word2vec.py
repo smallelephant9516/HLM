@@ -122,175 +122,104 @@ class EarlyStopping():
             return False
 
 
+#running model
+def run_model(corpus_ignore):
+    #create vocabulary and its index
+    vocabulary = set(itertools.chain.from_iterable(corpus_ignore))
+    vocabulary_size = len(vocabulary)
+    print(vocabulary_size)
+
+    word_to_index = {w: idx for (idx, w) in enumerate(vocabulary)}
+    index_to_word = {idx: w for (idx, w) in enumerate(vocabulary)}
+
+    # create to 2D class pairs
+    w = 1
+    context_tuple_list = []
+    negative_samples = sample_negative(4)
+
+    for text in corpus_ignore:
+        for i, word in enumerate(text):
+            if word==0:
+                print(type(word))
+                continue
+            first_context_word_index = max(0,i-w)
+            last_context_word_index = min(i+w, len(text))
+            for j in range(first_context_word_index, last_context_word_index):
+                neighbor=text[j]
+                if j==0:
+                    continue
+                if neighbor==0:
+                    continue
+                if i!=j:
+                    context_tuple_list.append((word, neighbor, next(negative_samples)))
+    print("There are {} pairs of target and context words".format(len(context_tuple_list)))
 
 
+    embedding_size=100
+    net = Word2Vec(embedding_size=embedding_size, vocab_size=vocabulary_size)
+    optimizer = optim.Adam(net.parameters())
+    early_stopping = EarlyStopping(patience=5, min_percent_gain=1)
+    n=0
+    while True:
+        n=n+1
+        print(n)
+        losses = []
+        context_tuple_batches = get_batches(context_tuple_list, batch_size=1000)
+        for i in range(len(context_tuple_batches)):
+            net.zero_grad()
+            target_tensor, context_tensor, negative_tensor = context_tuple_batches[i]
+            loss = net(target_tensor, context_tensor, negative_tensor)
+            loss.backward()
+            optimizer.step()
+            losses.append(loss.data)
+        print("Loss: ", torch.mean(torch.stack(losses)),torch.stack(losses)[0],torch.stack(losses)[-1])
+        early_stopping.update_loss(torch.mean(torch.stack(losses)))
+        if early_stopping.stop() is True:
+            break
+        if torch.mean(torch.stack(losses))<10:
+            break
 
+    #2D class embedding
+    EMBEDDINGS = net.target.weight.data.cpu().numpy()
+    EMBEDDINGS_np=np.array(EMBEDDINGS)
 
+    # average filament embedding
 
-
-# load dataset
-file_path='F:/script/class2vec/real_star_file/10230_tau.star'
-datatype=1 #0 is relion 3.1, 1 is relion 3, 2 is cryosparc
-
-file_name=os.path.basename(file_path)
-output_path=os.path.dirname(file_path)+'/'+os.path.splitext(file_name)[0]
-if os.path.isdir(output_path) is False:
-    os.mkdir(output_path)
-
-if datatype<2:
-    file_info=EMdata.read_relion(file_path)
-    if datatype==0:
-        #read data (relion3.1)
-        dataset=file_info.getRdata_31()
-        optics=file_info.extractoptic()
-    else:
-        #read relion 3.0
-        dataset=file_info.getRdata()
-    metadata=dataset[0]
-    print(metadata)
-    data=dataset[1]
-    print(data[0])
-    corpus_information=EMdata.process_helical(dataset).extarct_helical_select()
-else:
-    #read cryosparc
-    dataset=np.load(file_path)
-    corpus_information=EMdata.process_cryosparc_helical(dataset).extract_helical()
-corpus_dic,helix_name=corpus_information
-corpus=list(corpus_dic.values())
-corpus_backup=corpus[:]
-
-
-#create corpus
-corpus_ignore=[]
-for i in range(len(corpus)):
-    corpus_row=[]
-    lst=corpus[i]
-    count=lst[0][1]
-    for j in range(len(lst)):
-        particle=lst[j]
-        if count==int(particle[1]):
-            corpus_row.append(particle[0])
-            count+=1
+    average_method=0 # 0 is average, 1 is weight average
+    filament_score=[]
+    all_filament_data=[]
+    filament_variance=[]
+    for filament in corpus_ignore:
+        score=torch.zeros(embedding_size)
+        counts=0
+        filament_list=[]
+        for i in filament:
+            if i==0:
+                continue
+            counts+=1
+            filament_list.append(EMBEDDINGS[word_to_index[i]])
+        if len(filament_list)==0:
+            print('no')
+        filament_list=np.array(filament_list)
+        if len(filament_list)==1:
+            filament_variance.append(float(0))
         else:
-            while 1:
-                if count==int(lst[j][1]):
-                    corpus_row.append(particle[0])
-                    count+=1
-                    break
-                corpus_row+=[0]
-                count+=1               
-    corpus_ignore.append(corpus_row)
-print(len(helix_name))
-
-##illustrate the length of filament
-#corpus_length_histogram=[]
-#for i in range(len(corpus_ignore)):
-#    corpus_length_histogram.append(len(corpus_ignore[i]))
-#fig,ax=plt.subplots(2)
-#ax[0].hist(corpus_length_histogram,list(range(0,max(corpus_length_histogram)+10,1)))
-#ax[1].bar(list(range(0,len(corpus_backup))),corpus_length_histogram)
-#plt.savefig(output_path+'/'+os.path.splitext(file_name)[0]+"length_histogram.png",bbox_inches='tight', pad_inches=0.01)
-
-
-#create vocabulary and its index
-vocabulary = set(itertools.chain.from_iterable(corpus_ignore))
-vocabulary_size = len(vocabulary)
-print(vocabulary_size)
-
-word_to_index = {w: idx for (idx, w) in enumerate(vocabulary)}
-index_to_word = {idx: w for (idx, w) in enumerate(vocabulary)}
-
-# create to 2D class pairs
-w = 1
-context_tuple_list = []
-negative_samples = sample_negative(4)
-
-for text in corpus_ignore:
-    for i, word in enumerate(text):
-        if word==0:
-            print(type(word))
-            continue
-        first_context_word_index = max(0,i-w)
-        last_context_word_index = min(i+w, len(text))
-        for j in range(first_context_word_index, last_context_word_index):
-            neighbor=text[j]
-            if j==0:
+            pca=PCA(n_components=1).fit(filament_list)
+            filament_variance.append(pca.singular_values_[0])
+        mean=filament_list.mean(axis=0)
+        all_filament_data.append(filament_list)
+        if average_method==0:
+            filament_score.append(mean)
+        elif average_method==1:
+            dim=len(filament_list[0])
+            filament_normalized=np.exp(-0.5*((filament_list-mean) @ (filament_list-mean).T*0)).diagonal()/np.sqrt(np.pi**dim*0.05)
+            filament_normalized=filament_normalized/filament_normalized.sum()
+            score=filament_normalized @ filament_list
+            if counts<=2:
                 continue
-            if neighbor==0:
-                continue
-            if i!=j:
-                context_tuple_list.append((word, neighbor, next(negative_samples)))
-print("There are {} pairs of target and context words".format(len(context_tuple_list)))
-
-
-embedding_size=100
-net = Word2Vec(embedding_size=embedding_size, vocab_size=vocabulary_size)
-optimizer = optim.Adam(net.parameters())
-early_stopping = EarlyStopping(patience=5, min_percent_gain=1)
-n=0
-while True:
-    n=n+1
-    print(n)
-    losses = []
-    context_tuple_batches = get_batches(context_tuple_list, batch_size=1000)
-    for i in range(len(context_tuple_batches)):
-        net.zero_grad()
-        target_tensor, context_tensor, negative_tensor = context_tuple_batches[i]
-        loss = net(target_tensor, context_tensor, negative_tensor)
-        loss.backward()
-        optimizer.step()
-        losses.append(loss.data)
-    print("Loss: ", torch.mean(torch.stack(losses)),torch.stack(losses)[0],torch.stack(losses)[-1])
-    early_stopping.update_loss(torch.mean(torch.stack(losses)))
-    if early_stopping.stop() is True:
-        break
-    if torch.mean(torch.stack(losses))<10:
-        break
-
-#2D class embedding
-EMBEDDINGS = net.target.weight.data.cpu().numpy()
-EMBEDDINGS_np=np.array(EMBEDDINGS)
-
-# average filament embedding
-
-average_method=0 # 0 is average, 1 is weight average
-filament_score=[]
-all_filament_data=[]
-filament_variance=[]
-for filament in corpus_ignore:
-    score=torch.zeros(embedding_size)
-    counts=0
-    filament_list=[]
-    for i in filament:
-        if i==0:
-            continue
-        counts+=1
-        filament_list.append(EMBEDDINGS[word_to_index[i]])
-    if len(filament_list)==0:
-        print('no')
-    filament_list=np.array(filament_list)
-    if len(filament_list)==1:
-        filament_variance.append(float(0))
-    else:
-        pca=PCA(n_components=1).fit(filament_list)
-        filament_variance.append(pca.singular_values_[0])
-    mean=filament_list.mean(axis=0)
-    all_filament_data.append(filament_list)
-    if average_method==0:
-        filament_score.append(mean)
-    elif average_method==1:
-        dim=len(filament_list[0])
-        filament_normalized=np.exp(-0.5*((filament_list-mean) @ (filament_list-mean).T*0)).diagonal()/np.sqrt(np.pi**dim*0.05)
-        filament_normalized=filament_normalized/filament_normalized.sum()
-        score=filament_normalized @ filament_list
-        if counts<=2:
-            continue
-        filament_score.append(np.array(score))
-all_data=filament_score[:]
-all_data.extend(EMBEDDINGS_np)
-filament_number=len(filament_score)
-print(filament_number)
-#filament_normalized=np.exp(-0.5*((filament_list-mean) @ (filament_list-mean).T)).diagonal()/np.sqrt(np.pi**dim)
-
-#save filament embedding
-np.save()
+            filament_score.append(np.array(score))
+    all_data=filament_score[:]
+    all_data.extend(EMBEDDINGS_np)
+    filament_number=len(filament_score)
+    print('The filament number are: ',filament_number)
+    return all_data

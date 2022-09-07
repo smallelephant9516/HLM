@@ -132,16 +132,6 @@ def import_metafile(file_path, datatype):
 
     return corpus_ignore
 
-def overlaping_kmer(data,k):
-    kmer_corpus=[]
-    for i in range(len(data)):
-        lst=data[i]
-        kmer_lst=[]
-        for j in range(len(lst)-k+1):
-            kmer_lst.append(str(lst[j])+'-'+str(lst[j+1]))
-        kmer_corpus.append(kmer_lst)
-    return kmer_corpus
-
 def cut_corpus(corpus,cut_length):
     new_corpus=[]
     cut_length=cut_length
