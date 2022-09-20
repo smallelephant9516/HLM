@@ -13,3 +13,13 @@
 *.pyc
 *.pyc
 __pycache__/EMdata.cpython-37.pyc
+*.pyc
+*.pyc
+.ipynb_checkpoints/Read_star-checkpoint.ipynb
+.ipynb_checkpoints/Read_Star-checkpoint.ipynb
+.ipynb_checkpoints/embedding-checkpoint.ipynb
+.ipynb_checkpoints/BERT_2Dclass_ignore-checkpoint.ipynb
+*.5
+*.4
+*.7
+*.6
