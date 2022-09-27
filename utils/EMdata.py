@@ -1,8 +1,64 @@
 import numpy as np
 import os
 import sys
+import time
+import pandas as pd
+import gemmi
 
-class read_relion(object):
+start_time= time.time()
+
+class read_data_df():
+    def __init__(self,file):
+        self.file = file
+    
+    def star2dataframe(self):
+        starFile=self.file
+        from gemmi import cif
+        star = cif.read_file(starFile)
+        if len(star) == 2:
+            optics = cif.Document()
+            optics.add_copied_block(star[0])
+            del star[0]
+            js = optics.as_json(True)  # True -> preserve case
+            optics = pd.read_json(js).T
+            d = {c.strip('_'): optics[c].values[0] for c in optics}
+            optics = pd.DataFrame(d)
+        else:
+            optics = None
+        js = star.as_json(True)  # True -> preserve case
+        data = pd.read_json(js).T
+        d = {c.strip('_'): data[c].values[0] for c in data}
+        data = pd.DataFrame(d)
+        
+        assert("rlnImageName" in data)
+        tmp = data["rlnImageName"].str.split("@", expand=True)
+        indices, filenames = tmp.iloc[:,0], tmp.iloc[:, -1]
+        indices = indices.astype(int)-1
+        data["pid"] = indices
+        data["filename"] = filenames
+    
+        if optics is not None:
+            og_names = set(optics["rlnOpticsGroup"].unique())
+            for gn, g in data.groupby("rlnOpticsGroup", sort=False):
+                if gn not in og_names:
+                    print(f"ERROR: optic group {gn} not available ({sorted(og_names)})")
+                    sys.exit(-1)
+                ptcl_indices = g.index
+                og_index = optics["rlnOpticsGroup"] == gn
+                if "rlnPixelSize" in optics:
+                    data.loc[ptcl_indices, "apix"] = optics.loc[og_index, "rlnPixelSize"].astype(float).iloc[0]
+        if "rlnPixelSize" in data:
+            data.loc[:, "apix"] = data["rlnPixelSize"]
+        if "rlnClassNumber" in data:
+            data.loc[:, "class"] = data["rlnClassNumber"]
+        if "rlnHelicalTubeID" in data:
+            data.loc[:, "helicaltube"] = data["rlnHelicalTubeID"].astype(int)-1
+        if "rlnAnglePsiPrior" in data:
+            data.loc[:, "phi0"] = data["rlnAnglePsiPrior"].astype(float).round(3) - 90.0
+    
+        return data
+
+class read_relion():
     def __init__(self, file):
         self.file = file
 
@@ -45,7 +101,37 @@ class read_relion(object):
                 Rdata.append(star_line.split())
 
         return Rvar, Rdata
-
+class process_helical_df():
+    def __init__(self,dataframe):
+        self.df=dataframe
+    def extract_helical_select(self):
+        dataframe=self.df
+        filament_data=dataframe.groupby(['filename','helicaltube'])
+        filament_index=list(filament_data.groups.keys())
+        helicaldic={}
+        helicalnum = []
+        dtype=[('class2D',int),('place',int),('index',int)]
+        for i in range(len(filament_index)):
+            name='-'.join(map(str, filament_index[i]))
+            helicaldic[name]=[]
+            helicalnum=helicalnum+[name]
+        print('The filament number are: ',len(helicalnum))
+        print('The number of particles are:',len(dataframe))
+        for i in range(len(dataframe)):
+            particle=dataframe.iloc[i]
+            ID=str(particle['filename']) + '-' + str(particle['helicaltube'])
+            helicaldic[ID]=helicaldic[ID]+[(particle['class'],particle['rlnImageName'][0:6],i)]
+            if i%10000==0:
+                end_time=time.time()
+                passed_time=(end_time-start_time)/60
+                print(i,'%s mins' % passed_time)
+        for i in range(len(helicalnum)):
+            lst=np.array(helicaldic[helicalnum[i]],dtype=dtype)
+            helicaldic[helicalnum[i]]=np.sort(lst,order='place')
+        print('finish converting')
+        for i in range(10):
+            print(helicaldic[helicalnum[i]])
+        return helicaldic, filament_index
 
 #the data is read_relion(sys.argv[1]).getRdata()
 class process_helical():
@@ -53,28 +139,38 @@ class process_helical():
         self.metadata=dataset[0]
         self.data=dataset[1]
         self.classnumber=classnumber
-    def extarct_helical(self):
+    def extarct_helical(self,label=None):
         data=self.data
         M = self.metadata.index('_rlnImageName')
         H = self.metadata.index('_rlnHelicalTubeID')
-        C = self.metadata.index('_rlnClassNumber')
+        if label is None:
+            C = self.metadata.index('_rlnClassNumber')
         print('finish reading')
         # extract helical parameters
         helicaldic = {}
         helicalnum = []
         count = -1
+        label_id=0
         for particle in data:
             ID = particle[M][7:] + '-' + str(particle[H])
             if ID in helicalnum:
                 n = str(count)
                 lst = helicaldic[n]
-                lst.append(particle[C])
+                if label is not None:
+                    lst.append(label[label_id])
+                    label_id +=1
+                else: 
+                    lst.append(particle[C])
                 helicaldic[n] = lst
             else:
                 helicalnum.append(ID)
                 n = str(helicalnum.index(ID))
                 count += 1
-                helicaldic[n] = [particle[C]]
+                if label is not None:
+                    helicaldic[n]=[label[label_id]]
+                    label_id +=1
+                else:
+                    helicaldic[n] = [particle[C]]
         print('finish converting')
         for i in range(10):
             print(helicaldic[str(i)])
@@ -90,13 +186,18 @@ class process_helical():
         helicalnum = []
         count = -1
         dtype=[('class2D',int),('place',int),('index',int)]
+        print('number of particles',len(data))
         for i, particle in enumerate(data):
+            if i%10000==0:
+                end_time=time.time()
+                passed_time=(end_time-start_time)/60
+                print(i,'%s mins' % passed_time)
             ID = particle[M][7:] + '-' + str(particle[H])
             if ID in helicalnum:
                 n = str(helicalnum.index(ID))
-                helicaldic[n].append((particle[C],particle[M][0:6],i))
+                helicaldic[n]=helicaldic[n]+[(particle[C],particle[M][0:6],i)]
             else:
-                helicalnum.append(ID)
+                helicalnum=helicalnum+[ID]
                 n = str(helicalnum.index(ID))
                 count += 1
                 helicaldic[n] = [(particle[C],particle[M][0:6],i)]
@@ -107,6 +208,21 @@ class process_helical():
         #for i in range(5):
         #    print(helicaldic[str(i)])
         return helicaldic, helicalnum
+    def extarct_helical_select_fast(self):
+        data=self.data
+        M = self.metadata.index('_rlnMicrographName')
+        H = self.metadata.index('_rlnHelicalTubeID')
+        C = self.metadata.index('_rlnClassNumber')
+        print('finish reading')
+        dataframe=pd.DataFrame(data=data,columns=self.metadata)
+        print('finish dataframe')
+        groupby_filament=dataframe.groupby(['_rlnMicrographName','_rlnHelicalTubeID'])
+        print(groupby_filament.count())
+        # extract helical parameters
+        print('finish converting')
+        #for i in range(5):
+        #    print(helicaldic[str(i)])
+        return groupby_filament
 class process_cryosparc_helical():
     def __init__(self,data):
         self.data=data

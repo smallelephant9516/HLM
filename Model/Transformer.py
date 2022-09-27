@@ -14,6 +14,30 @@ from transformers import RobertaTokenizerFast,RobertaConfig,RobertaForMaskedLM, 
     pipeline
 
 
+def cut_corpus(corpus,cut_length):
+    cut_index=[]
+    new_corpus=[]
+    cut_length=cut_length
+    print(len(corpus))
+    for i in range(len(corpus)):
+        lst=corpus[i]
+        n=len(lst)
+        if n<=cut_length:
+            new_corpus.append(lst)
+            continue
+        if n%cut_length==0:
+            cut_amount=int(n/cut_length)
+        else:
+            cut_amount=int((n-n%cut_length)/cut_length)+1
+        for j in range(cut_amount-1):
+            cut_index.append(i)
+            new_corpus.append(lst[j*cut_length:(j+1)*cut_length])
+        new_corpus.append(lst[(cut_amount-1)*cut_length:])
+    print(len(new_corpus))
+    return new_corpus,cut_index
+
+
+
 vocabulary = set(itertools.chain.from_iterable(corpus_ignore))
 vocabulary_size = len(vocabulary)
 print(vocabulary_size)
@@ -112,27 +136,7 @@ trainer.save_model("./tokens/")
 feature_extraction = pipeline(
     'feature-extraction',model="./tokens",tokenizer="./tokens")
 
-def cut_corpus(corpus,cut_length):
-    cut_index=[]
-    new_corpus=[]
-    cut_length=cut_length
-    print(len(corpus))
-    for i in range(len(corpus)):
-        lst=corpus[i]
-        n=len(lst)
-        if n<=cut_length:
-            new_corpus.append(lst)
-            continue
-        if n%cut_length==0:
-            cut_amount=int(n/cut_length)
-        else:
-            cut_amount=int((n-n%cut_length)/cut_length)+1
-        for j in range(cut_amount-1):
-            cut_index.append(i)
-            new_corpus.append(lst[j*cut_length:(j+1)*cut_length])
-        new_corpus.append(lst[(cut_amount-1)*cut_length:])
-    print(len(new_corpus))
-    return new_corpus,cut_index
+
 corpus_code_cut,cut_index=cut_corpus(corpus_code,block_size-2)
 
 filament_embeddings=[]

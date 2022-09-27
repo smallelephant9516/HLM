@@ -21,16 +21,6 @@ print('all modules imported')
 
 # all the functions
 
-def overlaping_kmer(data,k):
-    kmer_corpus=[]
-    for i in range(len(data)):
-        lst=data[i]
-        kmer_lst=[]
-        for j in range(len(lst)-k+1):
-            kmer_lst.append(str(lst[j])+'-'+str(lst[j+1]))
-        kmer_corpus.append(kmer_lst)
-    return kmer_corpus
-
 def cut_corpus(corpus,cut_length):
     new_corpus=[]
     cut_length=cut_length
@@ -123,7 +113,7 @@ class EarlyStopping():
 
 
 #running model
-def run_model(corpus_ignore):
+def run_model(corpus_ignore , embedding_size=100, w = 2):
     #create vocabulary and its index
     vocabulary = set(itertools.chain.from_iterable(corpus_ignore))
     vocabulary_size = len(vocabulary)
@@ -133,7 +123,6 @@ def run_model(corpus_ignore):
     index_to_word = {idx: w for (idx, w) in enumerate(vocabulary)}
 
     # create to 2D class pairs
-    w = 1
     context_tuple_list = []
     negative_samples = sample_negative(4)
 
@@ -155,7 +144,6 @@ def run_model(corpus_ignore):
     print("There are {} pairs of target and context words".format(len(context_tuple_list)))
 
 
-    embedding_size=100
     net = Word2Vec(embedding_size=embedding_size, vocab_size=vocabulary_size)
     optimizer = optim.Adam(net.parameters())
     early_stopping = EarlyStopping(patience=5, min_percent_gain=1)

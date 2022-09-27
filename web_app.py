@@ -41,7 +41,7 @@ def main(args):
         output_path=os.path.dirname(meta_path)+'/'+os.path.splitext(file_name)[0]
         if os.path.isdir(output_path) is False:
             os.mkdir(output_path)
-        dataframe, helix_name, positive_label= getdata(meta_path)
+        dataframe, helix_name, positive_label, optics= getdata(meta_path)
         #print('/'.join('-'.join(helix_name[0].split('-')[:-1]).split('/')[2:]))
         # number of clusters
         filament_cluster_number = st.number_input('number of cluster', value=3, min_value=1, max_value=20, format="%d")
@@ -52,7 +52,9 @@ def main(args):
         #seperation
         separate=st.button('Separate!')
         if separate:
-            pt(separate)
+            pt(dataframe, filament_cluster_number, filament_pd['label'], optics, separate, output_path, file_name)
+            separate=False
+            print('finish seperation')
 
     st.title("visualize the 2Dclass2vec result")
     col1,_,col2 = st.beta_columns((5,0.1,5))
@@ -121,14 +123,40 @@ def calculate_elbow(filament_umap_2D):
     return res
 
 @st.cache(persist=True, show_spinner=True, ttl=1)
-def pt(separate):
+def pt(dataframe, filament_cluster_number,umap_predict, optics, separate, output_path, file_name):
+    if separate=True:
+        metadata=list(dataframe.columns)
+        data=dataframe.values
+        optics=optics
+        for i in range(filament_cluster_number):
+            locals()['cluster'+str(i)]=[]
+            locals()['clusterID'+str(i)]=[]
+        for i in range(len(corpus)):
+            labels=umap_predict[i]
+            locals()['clusterID'+str(labels)].append(i)
+            lst=corpus[i]
+            for j in range(len(lst)):
+                dataline=lst[j][-1]
+                locals()['cluster'+str(labels)].append(data[dataline])
+        for i in range(filament_cluster_number):
+            cluster_name='cluster'+str(i)
+            data_cluster=locals()[cluster_name]
+            if datatype==0:
+                output=EMdata.output_star(output_path+'/'+file_name,i,data_cluster,metadata)
+                output.opticgroup(optics)
+                output.writecluster()
+            elif datatype==1:
+                output=EMdata.output_star(output_path+'/'+file_name,i,data_cluster,metadata)
+                output.writemetadata()
+                output.writecluster()
     print(separate)
+    return 0
 
 @st.cache(persist=True, show_spinner=True)
-def getdata(meta_path,version=0,N2D=False):
-    if version<2:
+def getdata(meta_path,datatype=0,N2D=False):
+    if datatype<2:
         file_info=EMdata.read_relion(meta_path)
-        if version==0:
+        if datatype==0:
             #read data (relion3.1)
             dataset=file_info.getRdata_31()
             optics=file_info.extractoptic()
@@ -155,7 +183,7 @@ def getdata(meta_path,version=0,N2D=False):
         # positive_label.append(helix_name[i][63:68])
         positive_label.append(helix_name[i][11:14])
 
-    return dataframe, helix_name, positive_label
+    return dataframe, helix_name, positive_label, optics
 
 @st.cache(persist=True, show_spinner=True)
 def filament_start_end(data_select):
