@@ -124,7 +124,7 @@ def calculate_elbow(filament_umap_2D):
 
 @st.cache(persist=True, show_spinner=True, ttl=1)
 def pt(dataframe, filament_cluster_number,umap_predict, optics, separate, output_path, file_name):
-    if separate=True:
+    if separate is True:
         metadata=list(dataframe.columns)
         data=dataframe.values
         optics=optics

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/2Dclass2vec.iml" filepath="$PROJECT_DIR$/.idea/2Dclass2vec.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../cryodrgn/.idea/cryodrgn.iml" filepath="$PROJECT_DIR$/../cryodrgn/.idea/cryodrgn.iml" />
     </modules>
   </component>
 </project>
