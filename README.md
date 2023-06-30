@@ -1,4 +1,4 @@
-# 2Dclass2vec
+# HLM
 
 The 2Dclass2vec is the method for using word2vec to convert the 2D class into vectors. The filament embedding can be converted to vector by averaging the 2D class vector into filment vectors. These filament vectors can be used for further processing. 
 
@@ -16,7 +16,7 @@ scikit-learn
 
 ## usage
 
-runing the jupyter note embedding.ipynb to get the embedding vector of each filament and seperate them into different clusters. 
+runing the jupyter note embedding.ipynb to get the embedding vector of each filament and separate them into different clusters using HLM_word2vec method, also, try to run HLM bert method, you can run the jupyter notebook BERT.ipynb
 
 Or run:
 
