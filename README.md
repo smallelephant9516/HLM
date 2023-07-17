@@ -24,7 +24,8 @@ runing the jupyter note embedding.ipynb to get the embedding vector of each fila
 
 Or run:
 
-     $ python filament_embedding.py --o External/job443/ --in_parts Class2D/job087/run_it025_data.star and use -h to check the possible command
+     $ python filament_embedding.py --o External/job443/ --in_parts Class2D/job087/run_it025_data.star 
+and use -h to check the possible command
 
 # web app
   
