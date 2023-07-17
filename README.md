@@ -58,16 +58,13 @@ word2vec model parameter and filament averaging:
   
   --optim          loss function
   
-  --avg_method 
-                        the method to do filament average, 0 means simple
-                        average, 1 means weight average
-                        
-dimension reduction and cluster diameter:
+  --avg_method   the method to do filament average, 0 means simple average, 1 means weight average dimension reduction and cluster diameter:
 
-  --n_neighbors 
-                        n_neighboers for the umap
+  --n_neighbors  n_neighboers for the umap
                         
   --min_dist    min_dis in umap
   
   --pca_dim      PCA dimension
+
+# web app
   
