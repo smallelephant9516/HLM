@@ -14,6 +14,9 @@ umap-learn
 
 scikit-learn
 
+### HLM-BERT
+TO use the HLM-Bert, an additional hugging face environment need to be install from here: https://huggingface.co/docs/transformers/installation
+
 ## usage
 
 runing the jupyter note embedding.ipynb to get the embedding vector of each filament and separate them into different clusters using HLM_word2vec method, also, try to run HLM bert method, you can run the jupyter notebook BERT.ipynb
