@@ -20,12 +20,11 @@ TO use the HLM-Bert, an additional hugging face environment need to be install f
 
 ## Usage
 
-runing the jupyter note embedding.ipynb to get the embedding vector of each filament and separate them into different clusters using HLM_word2vec method, also, try to run HLM bert method, you can run the jupyter notebook BERT.ipynb
+running the jupyter note embedding.ipynb to get the embedding vector of each filament and separate them into different clusters using HLM_word2vec method, also, try to run HLM bert method, you can run the jupyter notebook BERT.ipynb
 
 Or run:
 
-     $ python HLM.py --o External/job443/ --in_parts Class2D/job087/run_it025_data.star 
+     $ python HLM.py --o your_output_directory --in_parts your_star_file
 and use -h to check the possible command
 
-# web app
   

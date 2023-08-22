@@ -121,7 +121,7 @@ class process_helical_df():
             particle=dataframe.iloc[i]
             ID=str(particle['filename']) + '-' + str(particle['helicaltube'])
             helicaldic[ID]=helicaldic[ID]+[(particle['class'],particle['rlnImageName'][0:6],i)]
-            if i%10000==0:
+            if i%100000==0:
                 end_time=time.time()
                 passed_time=(end_time-start_time)/60
                 print(i,'%s mins' % passed_time)
@@ -188,7 +188,7 @@ class process_helical():
         dtype=[('class2D',int),('place',int),('index',int)]
         print('number of particles',len(data))
         for i, particle in enumerate(data):
-            if i%10000==0:
+            if i%100000==0:
                 end_time=time.time()
                 passed_time=(end_time-start_time)/60
                 print(i,'%s mins' % passed_time)

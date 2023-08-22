@@ -40,7 +40,7 @@ def cut_corpus(corpus,cut_length):
 
 
 # word2vec function
-def sample_negative(sample_size):
+def sample_negative(sample_size,corpus_ignore):
     sample_probability = {}
     word_counts = dict(Counter(list(itertools.chain.from_iterable(corpus_ignore))))
     normalizing = sum([v**0.75 for v in word_counts.values()])
@@ -55,7 +55,7 @@ def sample_negative(sample_size):
                  word_list.append(words[index])
         yield word_list
 
-def get_batches(context_tuple_list, batch_size=100):
+def get_batches(context_tuple_list, word_to_index, device, batch_size=100):
     random.shuffle(context_tuple_list)
     batches = []
     batch_target, batch_context, batch_negative = [], [], []
@@ -113,18 +113,17 @@ class EarlyStopping():
 
 
 #running model
-def run_model(corpus_ignore , embedding_size=100, w = 2):
+def run_model(corpus_ignore , device, embedding_size=100, w = 2):
     #create vocabulary and its index
     vocabulary = set(itertools.chain.from_iterable(corpus_ignore))
     vocabulary_size = len(vocabulary)
     print(vocabulary_size)
 
     word_to_index = {w: idx for (idx, w) in enumerate(vocabulary)}
-    index_to_word = {idx: w for (idx, w) in enumerate(vocabulary)}
 
     # create to 2D class pairs
     context_tuple_list = []
-    negative_samples = sample_negative(4)
+    negative_samples = sample_negative(4, corpus_ignore)
 
     for text in corpus_ignore:
         for i, word in enumerate(text):
@@ -150,9 +149,8 @@ def run_model(corpus_ignore , embedding_size=100, w = 2):
     n=0
     while True:
         n=n+1
-        print(n)
         losses = []
-        context_tuple_batches = get_batches(context_tuple_list, batch_size=1000)
+        context_tuple_batches = get_batches(context_tuple_list, word_to_index, device, batch_size=1000)
         for i in range(len(context_tuple_batches)):
             net.zero_grad()
             target_tensor, context_tensor, negative_tensor = context_tuple_batches[i]
@@ -160,7 +158,7 @@ def run_model(corpus_ignore , embedding_size=100, w = 2):
             loss.backward()
             optimizer.step()
             losses.append(loss.data)
-        print("Loss: ", torch.mean(torch.stack(losses)),torch.stack(losses)[0],torch.stack(losses)[-1])
+        print(f"Loss in epoch {n}: ", torch.mean(torch.stack(losses)))
         early_stopping.update_loss(torch.mean(torch.stack(losses)))
         if early_stopping.stop() is True:
             break
@@ -176,7 +174,6 @@ def run_model(corpus_ignore , embedding_size=100, w = 2):
     average_method=0 # 0 is average, 1 is weight average
     filament_score=[]
     all_filament_data=[]
-    filament_variance=[]
     for filament in corpus_ignore:
         score=torch.zeros(embedding_size)
         counts=0
@@ -189,11 +186,6 @@ def run_model(corpus_ignore , embedding_size=100, w = 2):
         if len(filament_list)==0:
             print('no')
         filament_list=np.array(filament_list)
-        if len(filament_list)==1:
-            filament_variance.append(float(0))
-        else:
-            pca=PCA(n_components=1).fit(filament_list)
-            filament_variance.append(pca.singular_values_[0])
         mean=filament_list.mean(axis=0)
         all_filament_data.append(filament_list)
         if average_method==0:
