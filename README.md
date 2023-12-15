@@ -1,7 +1,7 @@
 # HLM
 
-The HLM is the method for using word2vec to convert the 2D class into vectors. The filament embedding can be converted to vector by averaging the 2D class vector into filment vectors. These filament vectors can be used for further processing. 
-![alt text](https://github.com/smallelephant9516/HLM/blob/master/figure1_new.png)
+The HLM is the method for using word2vec to convert the 2D class into vectors. The filament embedding can be calculated by averaging the 2D class vector into filment vectors. These filament vectors can be used for further processing. 
+![alt text](https://github.com/smallelephant9516/HLM/blob/master/HLM.png)
 
 ## Dependencies:
 
@@ -16,7 +16,7 @@ umap-learn
 scikit-learn
 
 ### HLM-BERT
-TO use the HLM-Bert, an additional hugging face environment need to be install from here: https://huggingface.co/docs/transformers/installation
+TO use the HLM-Bert, an additional hugging face environment needs to be installed from here: https://huggingface.co/docs/transformers/installation
 
 ## Usage
 
