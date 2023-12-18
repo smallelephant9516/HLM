@@ -26,7 +26,7 @@ parser.add_argument('--meta_path', action='store', default='/net/jiang/home/li32
 args = parser.parse_args()
 
 
-st.set_page_config(page_title="2Dclass2vec", layout="wide")
+st.set_page_config(page_title="HLM", layout="wide")
 def main(args):
     with st.sidebar:    # sidebar at the left of the screen
         # dimension reduction tab
@@ -57,7 +57,7 @@ def main(args):
             print('finish seperation')
 
     st.title("visualize the 2Dclass2vec result")
-    col1,_,col2 = st.beta_columns((5,0.1,5))
+    col1,_,col2 = st.columns((5,0.1,5))
     # left side column, clustering result
     with col1:
         if true_positive_label:

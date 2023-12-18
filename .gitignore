@@ -34,3 +34,4 @@ notebook/.ipynb_checkpoints/BERT_Npos-checkpoint.ipynb
 .ipynb_checkpoints
 Pipfile.lock
 Pipfile
+__pycache__

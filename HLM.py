@@ -16,6 +16,7 @@ print('loaded sklearn library')
 
 # plotting library
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 print('finish loading package')
 
@@ -124,7 +125,8 @@ def main(args):
     filament_umap = umap_2D[:]
 
     plt.figure(figsize=(20, 20))
-    plt.scatter(filament_umap[:, 0], filament_umap[:, 1], alpha=0.6, color='blue')
+    #plt.scatter(filament_umap[:, 0], filament_umap[:, 1], alpha=0.6, color='blue')
+    sns.kdeplot(x=filament_umap[:, 0], y=filament_umap[:, 1], fill=True, cmap='Blues')
     plt.savefig(output_path + '/' + os.path.splitext(file_name)[0] + "_umap_blue.png", bbox_inches='tight',
                 pad_inches=0.01)
 
@@ -134,7 +136,7 @@ def main(args):
         dm_path=output_path + '/umap_2D.npy'
         meta_path= file_path
         print(type(dm_path),type(dm_path))
-        os.system('streamlit run /net/jiang/home/li3221/scratch/Github/2Dclass2vec/web_app.py -- --dm_path %s --meta_path %s' % (dm_path, meta_path))
+        os.system('streamlit run /net/jiang/home/li3221/scratch/Github/HLM/web_app.py -- --dm_path %s --meta_path %s' % (dm_path, meta_path))
 
 
 
