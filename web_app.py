@@ -56,7 +56,7 @@ def main(args):
             separate=False
             print('finish seperation')
 
-    st.title("visualize the 2Dclass2vec result")
+    st.title("visualize the HLM result")
     col1,_,col2 = st.columns((5,0.1,5))
     # left side column, clustering result
     with col1:
